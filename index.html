@@ -22,7 +22,7 @@ body {
 
 .screen {
   display:none;
-  max-width:380px;
+  max-width:400px;
   margin:60px auto;
   background:#1c1c1c;
   padding:20px;
@@ -40,12 +40,12 @@ input {
 button {
   width:100%;
   padding:12px;
+  margin-top:6px;
   background:#00c853;
   border:none;
   color:white;
   border-radius:6px;
   cursor:pointer;
-  margin-top:6px;
 }
 
 .google {
@@ -70,7 +70,7 @@ button {
 
 <div id="header">BONFILS LIGHT</div>
 
-<!-- LOGIN SCREEN -->
+<!-- LOGIN -->
 <div id="loginScreen" class="screen" style="display:block;">
   <h3>Login</h3>
 
@@ -82,20 +82,13 @@ button {
   <button class="google" onclick="googleLogin()">Continue with Google</button>
 </div>
 
-<!-- PROFILE SETUP -->
+<!-- PROFILE -->
 <div id="profileScreen" class="screen">
   <h3>Profile Setup</h3>
 
   <input id="username" placeholder="Username">
-
-  <select id="font">
-    <option>Arial</option>
-    <option>Georgia</option>
-    <option>Courier New</option>
-  </select>
-
-  <input id="bg" placeholder="Background color (#111111)">
-
+  <input id="bg" placeholder="Background color (#111)">
+  
   <button onclick="saveProfile()">Continue</button>
 </div>
 
@@ -103,20 +96,20 @@ button {
 <div id="app">
   <h3 id="welcome"></h3>
 
-  <input id="postText" placeholder="What's on your mind?">
+  <input id="postText" placeholder="Write something...">
   <button onclick="post()">Post</button>
 
   <div id="feed"></div>
 </div>
 
-<!-- FIREBASE CDN (COMPAT VERSION ONLY) -->
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <script>
 
-/* ✅ FIREBASE CONFIG (FIXED) */
+/* 🔥 YOUR FIREBASE CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyCikwfRDsV1FsW1RZnKxqQbO1HOWGaIsZkU",
   authDomain: "blt-chat-system.firebaseapp.com",
@@ -137,18 +130,18 @@ let user;
 
 function login() {
   auth.signInWithEmailAndPassword(email.value, password.value)
-  .catch(e => alert(e.message));
+    .catch(e => alert(e.message));
 }
 
 function signup() {
   auth.createUserWithEmailAndPassword(email.value, password.value)
-  .catch(e => alert(e.message));
+    .catch(e => alert(e.message));
 }
 
 function googleLogin() {
   const provider = new firebase.auth.GoogleAuthProvider();
   auth.signInWithPopup(provider)
-  .catch(e => alert(e.message));
+    .catch(e => alert(e.message));
 }
 
 /* ---------------- AUTH STATE ---------------- */
@@ -160,18 +153,18 @@ auth.onAuthStateChanged(u => {
   }
 });
 
-/* ---------------- PROFILE CHECK ---------------- */
+/* ---------------- PROFILE ---------------- */
 
 function checkProfile() {
   db.collection("users").doc(user.uid).get()
-  .then(doc => {
-    if (doc.exists) {
-      applyTheme(doc.data());
-      enterApp(doc.data());
-    } else {
-      show("profileScreen");
-    }
-  });
+    .then(doc => {
+      if (doc.exists) {
+        applyTheme(doc.data());
+        enterApp(doc.data());
+      } else {
+        show("profileScreen");
+      }
+    });
 }
 
 /* ---------------- SAVE PROFILE ---------------- */
@@ -179,22 +172,20 @@ function checkProfile() {
 function saveProfile() {
   const data = {
     username: "@" + username.value,
-    font: font.value,
     bg: bg.value || "#0f0f0f"
   };
 
   db.collection("users").doc(user.uid).set(data)
-  .then(() => {
-    applyTheme(data);
-    enterApp(data);
-  });
+    .then(() => {
+      applyTheme(data);
+      enterApp(data);
+    });
 }
 
 /* ---------------- THEME ---------------- */
 
 function applyTheme(data) {
   document.body.style.background = data.bg;
-  document.body.style.fontFamily = data.font;
 }
 
 /* ---------------- ENTER APP ---------------- */
@@ -205,7 +196,7 @@ function enterApp(data) {
   loadFeed();
 }
 
-/* ---------------- POST ---------------- */
+/* ---------------- POSTS ---------------- */
 
 function post() {
   if (!postText.value) return;
@@ -219,24 +210,22 @@ function post() {
   postText.value = "";
 }
 
-/* ---------------- FEED ---------------- */
-
 function loadFeed() {
   db.collection("posts")
-  .orderBy("time","desc")
-  .onSnapshot(snap => {
-    feed.innerHTML = "";
-    snap.forEach(doc => {
-      const p = doc.data();
-      const div = document.createElement("div");
-      div.className = "post";
-      div.innerText = p.text;
-      feed.appendChild(div);
+    .orderBy("time", "desc")
+    .onSnapshot(snap => {
+      feed.innerHTML = "";
+      snap.forEach(doc => {
+        const p = doc.data();
+        const div = document.createElement("div");
+        div.className = "post";
+        div.innerText = p.text;
+        feed.appendChild(div);
+      });
     });
-  });
 }
 
-/* ---------------- UI SWITCH ---------------- */
+/* ---------------- UI ---------------- */
 
 function show(id) {
   document.querySelectorAll(".screen").forEach(s => s.style.display = "none");
