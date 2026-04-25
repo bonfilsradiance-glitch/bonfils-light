@@ -69,8 +69,9 @@ button {
 <!-- PROFILE -->
 <div id="profileScreen" class="screen">
   <h3>Profile Setup</h3>
+
   <input id="username" placeholder="Username">
-  
+
   <select id="font">
     <option>Arial</option>
     <option>Courier New</option>
@@ -78,20 +79,18 @@ button {
   </select>
 
   <input id="bg" placeholder="Background color (#000000)">
-  
+
   <button onclick="saveProfile()">Continue</button>
 </div>
 
 <!-- APP -->
 <div id="app">
-  
   <div style="padding:10px;">
     <input id="postText" placeholder="Share something...">
     <button onclick="post()">Post</button>
   </div>
 
   <div id="feed"></div>
-
 </div>
 
 <!-- FIREBASE -->
@@ -100,9 +99,8 @@ button {
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <script>
-
 const firebaseConfig = {
-  apiKey: "AIzaSyCikwfRDsV1FsW1RZnKxqbo1HOWGaIsZkU",
+  apiKey: "AIzaSyCikwfRDsV1FsW1RZnKxqHOWGaIsZkU",
   authDomain: "blt-chat-system.firebaseapp.com",
   projectId: "blt-chat-system",
   storageBucket: "blt-chat-system.firebasestorage.app",
@@ -117,23 +115,40 @@ const db = firebase.firestore();
 
 let user;
 
+/* SHOW SCREEN */
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.style.display="none");
+  document.getElementById("app").style.display="none";
+  document.getElementById(id).style.display="block";
+}
+
 /* LOGIN */
 function login(){
-  auth.signInWithEmailAndPassword(
-    email.value,
-    password.value
-  ).catch(e=>alert(e.message));
+  if(!email.value || !password.value){
+    alert("Fill email and password");
+    return;
+  }
+
+  auth.signInWithEmailAndPassword(email.value, password.value)
+  .catch(e=>alert(e.message));
 }
 
+/* SIGNUP */
 function signup(){
-  auth.createUserWithEmailAndPassword(
-    email.value,
-    password.value
-  ).catch(e=>alert(e.message));
+  if(!email.value || !password.value){
+    alert("Fill email and password");
+    return;
+  }
+
+  auth.createUserWithEmailAndPassword(email.value, password.value)
+  .catch(e=>alert(e.message));
 }
 
+/* GOOGLE */
 function google(){
-  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider)
+  .catch(e=>alert(e.message));
 }
 
 /* AUTH STATE */
@@ -172,7 +187,7 @@ function saveProfile(){
   });
 }
 
-/* APPLY THEME */
+/* THEME */
 function applyTheme(data){
   document.body.style.background = data.bg;
   document.body.style.fontFamily = data.font;
@@ -180,12 +195,16 @@ function applyTheme(data){
 
 /* ENTER APP */
 function enterApp(){
-  show("app");
+  document.getElementById("loginScreen").style.display="none";
+  document.getElementById("profileScreen").style.display="none";
+  document.getElementById("app").style.display="block";
   loadFeed();
 }
 
 /* POST */
 function post(){
+  if(!postText.value) return;
+
   db.collection("posts").add({
     text: postText.value,
     uid: user.uid,
@@ -195,30 +214,22 @@ function post(){
   postText.value="";
 }
 
-/* LOAD FEED */
+/* FEED */
 function loadFeed(){
   db.collection("posts")
   .orderBy("time","desc")
   .onSnapshot(snap=>{
     feed.innerHTML="";
     snap.forEach(d=>{
-      const p = d.data();
       const div = document.createElement("div");
       div.className="post";
-      div.innerText = p.text;
+      div.innerText = d.data().text;
       feed.appendChild(div);
     });
   });
 }
 
-/* UI */
-function show(id){
-  document.querySelectorAll(".screen").forEach(s=>s.style.display="none");
-  app.style.display="none";
-  document.getElementById(id).style.display="block";
-}
-
 </script>
 
 </body>
-  </html>
+</html>
