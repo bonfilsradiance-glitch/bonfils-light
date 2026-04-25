@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bonfils Light</title>
+
+<style>
+body {
+  margin:0;
+  font-family:Arial;
+  background:#111;
+  color:white;
+}
+
+#header {
+  background:#000;
+  padding:12px;
+  text-align:center;
+  font-weight:bold;
+}
+
+.screen { display:none; padding:20px; }
+
+input, select {
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  border-radius:6px;
+  border:none;
+}
+
+button {
+  width:100%;
+  padding:10px;
+  background:#00c853;
+  border:none;
+  color:white;
+  border-radius:6px;
+}
+
+#app { display:none; }
+
+.post {
+  background:#222;
+  padding:10px;
+  margin:10px;
+  border-radius:8px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="header">Bonfils Light</div>
+
+<!-- LOGIN -->
+<div id="loginScreen" class="screen" style="display:block;">
+  <h3>Login</h3>
+
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+
+  <button onclick="login()">Login</button>
+  <button onclick="signup()">Create Account</button>
+  <button onclick="google()">Google Login</button>
+</div>
+
+<!-- PROFILE -->
+<div id="profileScreen" class="screen">
+  <h3>Profile Setup</h3>
+  <input id="username" placeholder="Username">
+  
+  <select id="font">
+    <option>Arial</option>
+    <option>Courier New</option>
+    <option>Georgia</option>
+  </select>
+
+  <input id="bg" placeholder="Background color (#000000)">
+  
+  <button onclick="saveProfile()">Continue</button>
+</div>
+
+<!-- APP -->
+<div id="app">
+  
+  <div style="padding:10px;">
+    <input id="postText" placeholder="Share something...">
+    <button onclick="post()">Post</button>
+  </div>
+
+  <div id="feed"></div>
+
+</div>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCikwfRDsV1FsW1RZnKxqbo1HOWGaIsZkU",
+  authDomain: "blt-chat-system.firebaseapp.com",
+  projectId: "blt-chat-system",
+  storageBucket: "blt-chat-system.firebasestorage.app",
+  messagingSenderId: "1006452442964",
+  appId: "1:1006452442964:web:9e44c2f27df77539986ac1"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let user;
+
+/* LOGIN */
+function login(){
+  auth.signInWithEmailAndPassword(
+    email.value,
+    password.value
+  ).catch(e=>alert(e.message));
+}
+
+function signup(){
+  auth.createUserWithEmailAndPassword(
+    email.value,
+    password.value
+  ).catch(e=>alert(e.message));
+}
+
+function google(){
+  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+}
+
+/* AUTH STATE */
+auth.onAuthStateChanged(u=>{
+  if(u){
+    user = u;
+    checkProfile();
+  }
+});
+
+/* PROFILE CHECK */
+function checkProfile(){
+  db.collection("users").doc(user.uid).get()
+  .then(doc=>{
+    if(doc.exists){
+      applyTheme(doc.data());
+      enterApp();
+    } else {
+      show("profileScreen");
+    }
+  });
+}
+
+/* SAVE PROFILE */
+function saveProfile(){
+  const data = {
+    username: "@"+username.value,
+    font: font.value,
+    bg: bg.value || "#111"
+  };
+
+  db.collection("users").doc(user.uid).set(data)
+  .then(()=>{
+    applyTheme(data);
+    enterApp();
+  });
+}
+
+/* APPLY THEME */
+function applyTheme(data){
+  document.body.style.background = data.bg;
+  document.body.style.fontFamily = data.font;
+}
+
+/* ENTER APP */
+function enterApp(){
+  show("app");
+  loadFeed();
+}
+
+/* POST */
+function post(){
+  db.collection("posts").add({
+    text: postText.value,
+    uid: user.uid,
+    time: Date.now()
+  });
+
+  postText.value="";
+}
+
+/* LOAD FEED */
+function loadFeed(){
+  db.collection("posts")
+  .orderBy("time","desc")
+  .onSnapshot(snap=>{
+    feed.innerHTML="";
+    snap.forEach(d=>{
+      const p = d.data();
+      const div = document.createElement("div");
+      div.className="post";
+      div.innerText = p.text;
+      feed.appendChild(div);
+    });
+  });
+}
+
+/* UI */
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.style.display="none");
+  app.style.display="none";
+  document.getElementById(id).style.display="block";
+}
+
+</script>
+
+</body>
+  </html>
